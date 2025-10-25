@@ -1,0 +1,205 @@
+close all
+clear all %#ok<CLALL>
+clc
+
+satData=readtable('Carroll_Colin_R32_saturation.txt');%saturationdata
+Tr09Data=readtable('Carroll_Colin_R32_Tr-0.9.txt');%Tr=0.9Data  
+Tr1Data=readtable('Carroll_Colin_R32_Tr-1.0.txt');%Tr=1 Data
+Tr11Data=readtable('Carroll_Colin_R32_Tr-1.1.txt');%Tr=1.1 Data
+
+p1=plot(satData,"Volume_l_M3_mol_","Pressure_bar_","Color",[0,0,0]);%plot of the liquid side of Pv diagram. The color is [0 0 0] which represents black in RGB. 
+hold on
+p2=plot(satData,"Volume_v_M3_mol_","Pressure_bar_","Color",[0,0,0]);%plot of the vapor side of Pv diagram. The color is also [0 0 0] which is black. 
+xlim([0,0.00066410])%This is a range of m^3/mol of temp 315.44k in the saturated liquid to 315.44k in the vapor phase. This so we can see the graph more clearly. 
+ylim([25.969,80])%minimum pressure to maximum pressure that fits the graph
+xlabel('Molar Volume (m^3/mol)') %label of the x axis
+ylabel('Pressure (bar)') %label of the y axis
+title('Comparison of NIST and VDW Isotherms for R-32 ') %title of the graph
+
+p3=scatter(Tr09Data.Volume_m3_mol_, Tr09Data.Pressure_bar_, 30, 'b', 'o'); %plots every point in the Tr=0.9 data in blue circles
+p4=scatter(Tr1Data.Volume_m3_mol_,Tr1Data.Pressure_bar_, 30, 'r', 'o'); %plots every point in the Tr=1 data in red circles.
+p5=scatter(Tr11Data.Volume_m3_mol_,Tr11Data.Pressure_bar_,30,'g', 'o'); %plots every point in the Tr=1.1 data in green circles. Link to it: https://www.mathworks.com/help/matlab/creating_plots/create-line-plot-with-markers.html 
+
+
+function Pcalc_vdw_R32=vdw(v,T,Tc,Pc)  %calling function for van der walls EOS
+R=8.314472e-5; %R value in m^3*bar/mol*k
+a=27/64.*(R.*Tc).^2./Pc; %a parameter (bar*m^6/mol^2)
+b=R.*Tc/(8.*Pc); %b parameter (m^3/mol)
+Pcalc_vdw_R32=R.*T./(v-b)-a./(v.^2);%vdw equation (bar)
+end
+
+R=8.3144472e-5;
+Tc=351.25; %critical temp(K) of R-32
+Pc=57.826; %critical pressure (bar) of R-32
+Trvalues=[0.9 1.0 1.1]; %I put Trvalues in a 1 by 3 vector. 
+vmin = 1.1 * R * Tc / (8 * Pc);
+v1=linspace(vmin, max(Tr09Data.Volume_m3_mol_), 10000); %linearly spaced vector for volumes at Tr=0.9
+v2=linspace(vmin, max(Tr1Data.Volume_m3_mol_), 10000);%linearly spaced vector for volumes at Tr=1.0
+v3=linspace(vmin, max(Tr11Data.Volume_m3_mol_), 10000);%linearly spaced vector for volumes at Tr=1.1
+vValue={v1 v2 v3}; %needs to be in an array because using [brackets] will output all the values for v1 v2 and v3 in one big vector
+
+for i=1:length(Trvalues) %start loop for the reduced temp
+    T=Trvalues(i)*Tc; %calculate the reduced temp 
+    v=vValue{i};%Trvalues and vValue have the same length so we can use same i value. {} are used to extract each array for vValue. 
+    Pcalc_vdw_R32=vdw(v,T,Tc,Pc);%calculate pressure for vdw. 
+if i==1 %when Tr=09 and v1 values. 
+    p6=plot(v,Pcalc_vdw_R32,'blue','LineStyle','-'); %For Tr=0.9 plotted in blue
+elseif i==2 %when Tr=1 and v2 values
+    p7=plot(v,Pcalc_vdw_R32,'red','LineStyle','-');%For Tr=1.0 is plotted in red
+elseif i==3%when Tr=1.1 and v3 values
+    p8=plot(v,Pcalc_vdw_R32,'green','LineStyle','-'); %For Tr=1.1 is plotted in green
+end
+end
+Tr09Pressure_VDW_R32=p6.YData;
+Tr1Pressure_VDW_R32=p7.YData;
+Tr11Pressure_VDW_R32=p8.YData;
+
+legend([p3 p6 p4 p7 p5 p8 p1], {'NIST, Tr=0.9', 'vdw Tr=0.9', 'NIST, Tr=1', 'vdw Tr=1.0', 'NIST,Tr=1.1', 'vdw Tr=1.1', 'liquid-vapor envelope'}) %this is to label the graph. I used this website to help me: https://www.mathworks.com/help/matlab/ref/legend.html 
+
+figure(2) % https://www.youtube.com/watch?v=Iw4XidTSQqk used this video to help me
+
+p1_PREOS=plot(satData,"Volume_l_M3_mol_","Pressure_bar_","Color",[0,0,0]);%plot of the liquid side of Pv diagram. The color is [0 0 0] which represents black in RGB. 
+hold on
+p2_PREOS=plot(satData,"Volume_v_M3_mol_","Pressure_bar_","Color",[0,0,0]);%plot of the vapor side of Pv diagram. The color is also [0 0 0] which is black. 
+xlim([0,0.00066410])%This is a range of m^3/mol of temp 315.44k in the saturated liquid to 315.44k in the vapor phase. This so we can see the graph more clearly. 
+ylim([25.969,80])%minimum pressure to maximum pressure
+xlabel('Molar Volume (m^3/mol)') %label of the x axis
+ylabel('Pressure (bar)') %label of the y axis
+title('Comparison of NIST and PREOS Isotherms for R-32 ') %title of the graph
+
+p3_PREOS=scatter(Tr09Data.Volume_m3_mol_, Tr09Data.Pressure_bar_, 30, 'b', 'o'); %plots every point in the Tr=0.9 data in blue circles
+p4_PREOS=scatter(Tr1Data.Volume_m3_mol_,Tr1Data.Pressure_bar_, 30, 'r', 'o'); %plots every point in the Tr=1 data in red squares
+p5_PREOS=scatter(Tr11Data.Volume_m3_mol_,Tr11Data.Pressure_bar_,30,'g', 'o'); %plots every point in the Tr=1.1 data in green upward triangles. Link to it: https://www.mathworks.com/help/matlab/creating_plots/create-line-plot-with-markers.html 
+
+
+function Pcalc_PREOS_R32=PREOS(v,T,Tc,Pc,omega) %calling function for PREOS
+R=8.314472e-5; %R value 
+a=0.45724.*(R.*Tc).^2./Pc; %a parameter
+b=0.07780.*R.*Tc./Pc; %b parameter
+kappa=0.37464 + 1.54226.*omega-0.26992.*omega.^2; %kappa
+alpha=(1+kappa.*(1-sqrt(T/Tc))).^2; %alpha
+Pcalc_PREOS_R32=R.*T./(v-b)-(a.*alpha)./(v.*(v+b)+b.*(v-b)); %PREOS equation
+end
+
+for i=1:length(Trvalues) %start loop for the reduced temp
+    T=Trvalues(i)*Tc; %calculate the reduced temp
+    v=vValue{i};%Trvalues and vValue have the same length so we can use same i value. 
+    Pcalc_PREOS_R32=PREOS(v,T,Tc,Pc,0.2769); %calculates pressure for PREOS. Acentric Factor for R32 is 0.2769
+if i==1 %when Tr=09 and v1 values. 
+    p6_PREOS=plot(v,Pcalc_PREOS_R32,'blue','LineStyle','-');%For Tr=0.9 plotted in blue
+elseif i==2 %when Tr=1 and v2 values
+    p7_PREOS=plot(v,Pcalc_PREOS_R32,'red','LineStyle','-');%when Tr=1 plotted in red
+elseif i==3 %when Tr=1.1 and v3 values
+    p8_PREOS=plot(v,Pcalc_PREOS_R32,'green','LineStyle','-'); %when Tr=1.1 plotted in green
+end
+end
+Tr09Pressure_PREOS_R32=p6_PREOS.YData;%used this to help me https://www.mathworks.com/matlabcentral/answers/100921-how-do-i-extract-data-points-from-a-plot
+Tr1Pressure_PREOS_R32=p7_PREOS.YData;%https://www.mathworks.com/matlabcentral/answers/100921-how-do-i-extract-data-points-from-a-plot
+Tr11Pressure_PREOS_R32=p8_PREOS.YData;%https://www.mathworks.com/matlabcentral/answers/100921-how-do-i-extract-data-points-from-a-plot
+
+legend([p3_PREOS p6_PREOS p4_PREOS p7_PREOS p5_PREOS p8_PREOS p1_PREOS], {'NIST, Tr=0.9', 'PREOS Tr=0.9', 'NIST, Tr=1', 'PREOS Tr=1.0', 'NIST,Tr=1.1', 'PREOS Tr=1.1', 'liquid-vapor envelope'}) %this is to label the graph. I used this website to help me: https://www.mathworks.com/help/matlab/ref/legend.html 
+
+figure(3)  % https://www.youtube.com/watch?v=Iw4XidTSQqk used this video to help me
+
+satData_Argon=readtable('Argon_sat.txt');%saturationdataforargon
+Tr09Data_Argon=readtable('Argon_0.9TC.txt');%Tr=0.9Data  
+Tr1Data_Argon=readtable('Argon_1.0TC.txt');%Tr=1 Data
+Tr11Data_Argon=readtable('Argon_1.1TC.txt');%Tr=1.1 Data
+
+satdata_Argon_Volume_Liquid=satData_Argon.Volume_l_L_mol_.*0.001;%L/mol to m^3/mol
+satdata_Argon_Volume_Vapor=satData_Argon.Volume_v_L_mol_.*0.001; %L/mol to m^3/mol
+satdata_Argon_Pressure=satData_Argon.Pressure_MPa_.*10; %Mpa to barr
+Tr09data_Argon_Volume=Tr09Data_Argon.Volume_l_mol_.*0.001; %L/mol to m^3/mol
+Tr1data_Argon_Volume=Tr1Data_Argon.Volume_l_mol_.*0.001; %L/mol to m^3/mol
+Tr11data_Argon_Volume=Tr11Data_Argon.Volume_l_mol_.*0.001; %L/mol to m^3/mol
+
+
+p1_Argon=plot(satdata_Argon_Volume_Liquid, satdata_Argon_Pressure, 'Color', [0,0,0]);%plot of the liquid side of Pv diagram. The color is [0 0 0] which is black.
+hold on
+p2_Argon=plot(satdata_Argon_Volume_Vapor, satdata_Argon_Pressure, 'Color', [0,0,0]);%plot of the vapor side of Pv diagram. The color is also [0 0 0] which is black. 
+xlim([0,0.000315840000000000])%This is a range of m^3/mol of temp 133.74k in the saturated liquid to 133.19k in the vapor phase. This so we can see the graph more clearly. 
+ylim([0,80])%minimum pressure to maximum pressure
+xlabel('Molar Volume (m^3/mol)') %label of the x axis
+ylabel('Pressure (barr)') %label of the y axis
+title('Comparison of NIST and VDW Isotherms for Argon') %title of the graph
+
+p3_Argon=scatter(Tr09data_Argon_Volume, Tr09Data_Argon.Pressure_bar_, 30, 'b','o'); %plots every point in the Tr=0.9 data in blue circles
+p4_Argon=scatter(Tr1data_Argon_Volume,Tr1Data_Argon.Pressure_bar_, 30, 'r', 'o'); %plots every point in the Tr=1 data in red squares
+p5_Argon=scatter(Tr11data_Argon_Volume,Tr11Data_Argon.Pressure_bar_,30,'g', 'o'); %plots every point in the Tr=1.1 data in green upward triangles. Link to it: https://www.mathworks.com/help/matlab/creating_plots/create-line-plot-with-markers.html 
+
+
+function Pcalc_vdw_Argon=vdw_Argon(v,T,Tc,Pc) %calling function for vdw equation
+R=8.314472e-5; %R value
+a=27/64.*(R.*Tc).^2./Pc; %a paramater   
+b=R.*Tc/(8.*Pc); %b parameter
+Pcalc_vdw_Argon=R.*T./(v-b)-a./(v.^2); %equation for VdwEOS
+end
+
+Tc=150.69;%Critical Temp for Argon
+Pc=48.603;%critical Pressure for Argon
+Trvalues=[0.9 1.0 1.1];%different Tr values 
+v1_Argon=linspace(min(Tr09data_Argon_Volume), max(Tr09data_Argon_Volume), 10000);%linearly spaced vector for volumes at Tr=0.9
+v2_Argon=linspace(min(Tr1data_Argon_Volume), max(Tr1data_Argon_Volume), 10000);%linearly spaced vector for volumes at Tr=1.0
+v3_Argon=linspace(min(Tr11data_Argon_Volume), max(Tr11data_Argon_Volume), 10000);%linearly spaced vector for volumes at Tr=1.1
+vValue={v1_Argon v2_Argon v3_Argon}; %needs to be in an array because using [brackets] will output all the values for v1 v2 and v3. 
+
+for i=1:length(Trvalues)%Loop for reduced Temp  
+    T=Trvalues(i)*Tc;%multiplies reduced temp but critical Temp
+    v=vValue{i};%Trvalues and vValue have the same length so we can use same i value. 
+    Pcalc_vdw_Argon=vdw_Argon(v,T,Tc,Pc);%calculates pressure 
+if i==1 %When Tr=0.9 and vvalues (1)
+    p6_Argon=plot(v,Pcalc_vdw_Argon,'blue','LineStyle','-'); %plots when Tr=0.9 in blue
+elseif i==2 %when Tr=1.0 and vvalues(2)
+    p7_Argon=plot(v,Pcalc_vdw_Argon,'red','LineStyle','-');%plots when Tr=1.0 in red
+elseif i==3%when Tr=1.1 and vvalues(3)
+    p8_Argon=plot(v,Pcalc_vdw_Argon,'green','LineStyle','-');%plots when Tr=1.1 in green
+end
+end
+Tr09Pressure_VDW_Argon=p6_Argon.YData;%used this to help me https://www.mathworks.com/matlabcentral/answers/100921-how-do-i-extract-data-points-from-a-plot
+Tr1Pressure_VDW_Argon=p7_Argon.YData;% https://www.mathworks.com/matlabcentral/answers/100921-how-do-i-extract-data-points-from-a-plot
+Tr11Pressure_VDW_Argon=p8_Argon.YData;%https://www.mathworks.com/matlabcentral/answers/100921-how-do-i-extract-data-points-from-a-plot
+
+
+legend([p3_Argon p6_Argon p4_Argon p7_Argon p5_Argon p8_Argon p1_Argon p2_Argon], {'NIST, Tr=0.9', 'VDW Tr=0.9', 'NIST, Tr=1', 'VDW Tr=1.0', 'NIST,Tr=1.1', 'VDW Tr=1.1', 'liquid-vapor envelope'}) %this is to label the graph. I used this website to help me: https://www.mathworks.com/help/matlab/ref/legend.html 
+
+figure (4)
+
+p1_Argon=plot(satdata_Argon_Volume_Liquid, satdata_Argon_Pressure, 'Color', [0,0,0]);%plot of the liquid side of Pv diagram. The color is [0 0 0] which is black.
+hold on
+p2_Argon=plot(satdata_Argon_Volume_Vapor, satdata_Argon_Pressure, 'Color', [0,0,0]);%plot of the vapor side of Pv diagram. The color is also [0 0 0] which is black. 
+xlim([0,0.000315840000000000])%This is a range of m^3/mol of temp 133.74k in the saturated liquid to 133.74k in the vapor phase. This so we can see the graph more clearly. 
+ylim([0,80])%minimum pressure to maximum pressure
+xlabel('Molar Volume (m^3/mol)') %label of the x axis
+ylabel('Pressure (barr)') %label of the y axis
+title('Comparison of NIST and PREOS Isotherms for Argon') %title of the graph
+
+p3_Argon=scatter(Tr09data_Argon_Volume, Tr09Data_Argon.Pressure_bar_, 30, 'b','o'); %plots every point in the Tr=0.9 data in blue circles
+p4_Argon=scatter(Tr1data_Argon_Volume,Tr1Data_Argon.Pressure_bar_, 30, 'r', 'o'); %plots every point in the Tr=1 data in red squares
+p5_Argon=scatter(Tr11data_Argon_Volume,Tr11Data_Argon.Pressure_bar_,30,'g', 'o'); %plots every point in the Tr=1.1 data in green upward triangles. Link to it: https://www.mathworks.com/help/matlab/creating_plots/create-line-plot-with-markers.html 
+
+function Pcalc_PREOS_Argon=PREOS_Argon(v,T,Tc,Pc,omega)%calling function for PREOS
+R=8.314472e-5;%R value
+a=0.45724.*(R.*Tc).^2./Pc;%a parameter
+b=0.07780.*R.*Tc./Pc;%b parameter
+kappa=0.37464 + 1.54226.*omega-0.26992.*omega.^2;%kappa
+alpha=(1+kappa.*(1-sqrt(T/Tc))).^2;%alpha
+Pcalc_PREOS_Argon=R.*T./(v-b)-(a.*alpha)./(v.*(v+b)+b.*(v-b));%equation for PREOS
+end
+
+for i=1:length(Trvalues)%Loop for reduced temp
+    T=Trvalues(i)*Tc;%multiples each reduced temp by critical temp
+    v=vValue{i};%Trvalues and vValue have the same length so we can use same i value. 
+    Pcalc_PREOS_Argon=PREOS_Argon(v,T,Tc,Pc,-0.00219);%-0.00219 is the acentric factor for Argon and this calcualates the pressure of PREOS.
+if i==1%When Tr=0.9 and vValues(1)
+    p6_PREOS_Argon=plot(v,Pcalc_PREOS_Argon,'blue','LineStyle','-');%plots Tr=0.9 in blue
+elseif i==2 %when Tr=1.0 and vValues(2)
+    p7_PREOS_Argon=plot(v,Pcalc_PREOS_Argon,'red','LineStyle','-'); %plots Tr=1.0 in red
+elseif i==3 %When Tr=1.1 and vValues(3)
+    p8_PREOS_Argon=plot(v,Pcalc_PREOS_Argon,'green','LineStyle','-');%plots Tr=1.1 in green
+end
+end
+Tr09Pressure_PREOS_Argon=p6_PREOS_Argon.YData;%used this to help me https://www.mathworks.com/matlabcentral/answers/100921-how-do-i-extract-data-points-from-a-plot
+Tr1Pressure_PREOS_Argon=p7_PREOS_Argon.YData;%https://www.mathworks.com/matlabcentral/answers/100921-how-do-i-extract-data-points-from-a-plot
+Tr11Pressure_PREOS_Argon=p8_PREOS_Argon.YData;%https://www.mathworks.com/matlabcentral/answers/100921-how-do-i-extract-data-points-from-a-plot
+
+legend([p3_Argon p6_PREOS_Argon p4_Argon p7_PREOS_Argon p5_Argon p8_PREOS_Argon p1_Argon p2_Argon], {'NIST, Tr=0.9', 'PREOS Tr=0.9', 'NIST, Tr=1', 'PREOS Tr=1.0', 'NIST,Tr=1.1', 'PREOS Tr=1.1', 'liquid-vapor envelope'}) %this is to label the graph. I used this website to help me: https://www.mathworks.com/help/matlab/ref/legend.html 
