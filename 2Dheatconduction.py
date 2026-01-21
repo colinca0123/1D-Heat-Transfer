@@ -1,27 +1,31 @@
 import numpy as np
 import matplotlib.pyplot as plt
+#Problem: Continous 1D metal rod
+#Rod has certain characteristics: Heat diffusivity constant and its length
+#alpha is our heat diffusivity: Lets assume material is copper
 
 
-# Defining our problem
-
-a = 110
-length = 50 #mm
+a = 110#thermal diffusivity of copper in mm^2/s
+length = 50 #50mm
 time = 4 #seconds
-nodes = 40
+nodes = 40 #meshes or positions along the rod
 
-# Initialization 
+#since we are doing a 2D heat transfer a PDE consists of three values that it consists of delta X, y and delta t
+#dx and dy represents the space between each node 
+#smaller dx the better the precision
 
-dx = length / (nodes-1)
+dx = length / (nodes-1) #h values
 dy = length / (nodes-1)
 
-dt = min(   dx**2 / (4 * a),     dy**2 / (4 * a))
+dt = min(   dx**2 / (4 * a),     dy**2 / (4 * a)) #explicit finite difference method, this makes sure that the simulation does not blow up
 
 t_nodes = int(time/dt) + 1
 
 u = np.zeros((nodes, nodes)) + 20 # Plate is initially as 20 degres C
-
-# Boundary Conditions 
-
+#initial time distribution at time=0
+#initial rod starts at 20 degrees celsius everywhere except the BC
+#1D array with 20 elements
+#Boundary conditions
 u[0, :] = np.linspace(0, 100, nodes)
 u[-1, :] = np.linspace(0, 100, nodes)
 
@@ -63,6 +67,7 @@ while counter < time :
 
 
 plt.show()
+
 
 
 
